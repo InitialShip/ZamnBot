@@ -10,7 +10,7 @@ token = os.getenv('DISCORD_TOKEN')
 
 keep_alive()
 
-handler = log.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+#handler = log.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -78,4 +78,5 @@ async def on_member_join(member):
 #     await poll_message.add_reaction("👍")
 #     await poll_message.add_reaction("👎")
 
-bot.run(token, log_handler=handler, log_level=log.DEBUG)
+
+bot.run(token)
