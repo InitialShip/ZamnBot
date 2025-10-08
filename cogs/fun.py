@@ -17,7 +17,7 @@ class Fun(commands.Cog):
 
     @commands.command(name='cat')
     async def cat(self, ctx):
-        await ctx.reply('Meow!')
+        await ctx.reply('https://tenor.com/view/bobitos-mimis-michis-gif-943529865427663588')
 
     @commands.command(name='slots')
     async def slots(self, ctx):
@@ -129,4 +129,5 @@ class Fun(commands.Cog):
             await ctx.send(f"Usage: {prefix}scan <word>")
 
 async def setup(bot):
+
     await bot.add_cog(Fun(bot))
