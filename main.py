@@ -3,10 +3,11 @@ from discord.ext import commands
 import logging as log
 from dotenv import load_dotenv
 import os
+from keep_alive import keep_alive
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
-
+keep_alive()
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -69,5 +70,6 @@ async def reload_error(ctx, error):
 @bot.event
 async def on_member_join(member):
     await member.send(f"Welcome to the server {member.name}")
+
 
 bot.run(token)
