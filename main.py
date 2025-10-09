@@ -12,7 +12,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-COMMAND_PREFIX = 't!'
+COMMAND_PREFIX = 'z!'
 
 INITIAL_COGS = [
     'cogs.fun',
@@ -73,3 +73,4 @@ async def on_member_join(member):
 
 
 bot.run(token)
+
