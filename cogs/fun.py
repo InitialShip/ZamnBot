@@ -41,7 +41,6 @@ class Fun(commands.Cog):
         await ctx.send(message)
 
     @commands.command(name='zamn', aliases=["countzamn", "zamnscan"])
-    @commands.has_permissions(manage_messages=True) 
     async def zamn(self, ctx):
         await ctx.send("Starting message scan in this channel for [zamn]... This may take a moment.")
         zamn_authors = {}
@@ -83,7 +82,6 @@ class Fun(commands.Cog):
         await ctx.send(report)
     
     @commands.command(name='scan')
-    @commands.has_permissions(manage_messages=True) 
     async def scan_for_word(self, ctx, word: str):
         await ctx.send(f"Starting message scan in this channel for [**{word}**]... This may take a moment.")
 
@@ -131,3 +129,4 @@ class Fun(commands.Cog):
 async def setup(bot):
 
     await bot.add_cog(Fun(bot))
+
