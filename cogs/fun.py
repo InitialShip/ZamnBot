@@ -2,8 +2,7 @@ import discord
 from discord.ext import commands
 import random
 
-SLOTS_SYMBOLS = ["🍒", "🍇", "🍊", "🍋", "💰", "💎"]
-WIN_MULTIPLIER = 5
+
 MESSAGES_LIMIT = 1000 #human messages
 
 class Fun(commands.Cog):
@@ -14,31 +13,10 @@ class Fun(commands.Cog):
     @commands.command(name='hello')
     async def hello(self, ctx):
         await ctx.send(f"Hello, {ctx.author.display_name} <:xdd:1425172451150659727>")
-
+    
     @commands.command(name='cat')
     async def cat(self, ctx):
         await ctx.reply('https://tenor.com/view/bobitos-mimis-michis-gif-943529865427663588')
-
-    @commands.command(name='slots')
-    async def slots(self, ctx):
-        results = [random.choice(SLOTS_SYMBOLS) for _ in range(3)]
-        display_results = f"|{'|'.join(results)}|"
-
-        if results[0] == results[1] == results [2]:
-            winnings = 100 * WIN_MULTIPLIER
-            message = (
-                f"**🎰 SLOT MACHINE SPIN 🎰**\n\n"
-                f"**{display_results}**\n\n"
-                f"🎉 **JACKPOT!** {results[0]}x3! You won {winnings} points! 🎉"
-            )
-        else:
-            message = (
-                f"**🎰 SLOT MACHINE SPIN 🎰**\n\n"
-                f"**{display_results}**\n\n"
-                f"Try again next time! Better luck soon. 💔"
-            )
-
-        await ctx.send(message)
 
     @commands.command(name='zamn', aliases=["countzamn", "zamnscan"])
     async def zamn(self, ctx):
@@ -126,8 +104,6 @@ class Fun(commands.Cog):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(f"Usage: {prefix}scan <word>")
 
+
 async def setup(bot):
-
     await bot.add_cog(Fun(bot))
-
-
