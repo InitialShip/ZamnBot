@@ -94,7 +94,7 @@ class Fun(commands.Cog):
                 continue
             if message.content.startswith(prefix):
                 continue
-            if word in message.content.lower():
+            if word.lower() in message.content.lower():
                 print(f"found in message ID {message.id} from {message.author}")
                 author_name = message.author.display_name
                 authors[author_name] = authors.get(author_name, 0) + 1
@@ -129,4 +129,5 @@ class Fun(commands.Cog):
 async def setup(bot):
 
     await bot.add_cog(Fun(bot))
+
 
