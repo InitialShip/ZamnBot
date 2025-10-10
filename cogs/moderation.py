@@ -6,8 +6,5 @@ class Moderation(commands.Cog):
         self.bot = bot
         print("Moderation Cog ready!")
 
-    
-
-
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
