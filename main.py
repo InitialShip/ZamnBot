@@ -7,12 +7,15 @@ from keep_alive import keep_alive
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
-keep_alive()
+command_prefix = os.getenv('COMMAND_PREFIX')
+is_development = os.getenv('IS_DEVELOPMENT')
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-COMMAND_PREFIX = 'z!'
+if command_prefix is None:
+    command_prefix = 'z!'
 
 INITIAL_COGS = [
     'cogs.fun',
@@ -41,10 +44,10 @@ class ZamnBot(commands.Bot):
     @commands.Cog.listener()
     async def on_ready(self):
         print(f"Zamn ! We are ready to go in, {self.user.name}")
-        await self.change_presence(activity=discord.Game(name=f"{COMMAND_PREFIX}help | 💣"))
+        await self.change_presence(activity=discord.Game(name=f"{command_prefix}help | 💣"))
 
 
-bot = ZamnBot(COMMAND_PREFIX, intents=intents)
+bot = ZamnBot(command_prefix, intents=intents)
 
 @bot.command(name="reload", aliases=['r'])    
 @commands.is_owner()
@@ -65,12 +68,15 @@ async def reload(ctx, extension_name: str):
 @reload.error
 async def reload_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Usage: {COMMAND_PREFIX}reload <module_name>")
+        await ctx.send(f"Usage: {command_prefix}reload <module_name>")
 
 @bot.event
 async def on_member_join(member):
     await member.send(f"Welcome to the server {member.name}")
 
-
-bot.run(token)
-
+if is_development is False:
+    keep_alive()
+    bot.run(token=token)
+else:
+    handler = log.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+    bot.run(token=token,log_handler=handler,log_level=log.DEBUG)
