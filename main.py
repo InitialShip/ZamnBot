@@ -9,7 +9,7 @@ load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
 command_prefix = os.getenv('COMMAND_PREFIX')
 is_development = os.getenv('IS_DEVELOPMENT')
-
+keep_alive()
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -75,8 +75,9 @@ async def on_member_join(member):
     await member.send(f"Welcome to the server {member.name}")
 
 if is_development is False:
-    keep_alive()
+    
     bot.run(token=token)
 else:
     handler = log.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+
     bot.run(token=token,log_handler=handler,log_level=log.DEBUG)
