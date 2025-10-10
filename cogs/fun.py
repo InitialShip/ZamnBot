@@ -19,10 +19,6 @@ class Fun(commands.Cog):
     async def cat(self, ctx):
         await ctx.reply('https://tenor.com/view/bobitos-mimis-michis-gif-943529865427663588')
 
-    @commands.command(name = "avatar", aliases=["a"])
-    async def  get_avatar(self, ctx:commands.Context, member: discord.member):
-        await ctx.send("Avatar command")
-
     @commands.command(name='zamn', aliases=["countzamn", "zamnscan"])
     async def zamn(self, ctx):
         await ctx.send("Starting message scan in this channel for [zamn]... This may take a moment.")
