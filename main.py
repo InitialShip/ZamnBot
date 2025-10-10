@@ -1,15 +1,18 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import logging as log
 from dotenv import load_dotenv
 import os
+import asyncpg as acpg
 from keep_alive import keep_alive
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
 command_prefix = os.getenv('COMMAND_PREFIX')
-is_development = os.getenv('IS_DEVELOPMENT')
-keep_alive()
+is_development = (os.getenv('IS_DEVELOPMENT',"false").lower() == 'true')
+db_url = os.getenv('DATABASE_URL')
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
@@ -24,14 +27,29 @@ INITIAL_COGS = [
     'cogs.economy'
 ]
 
-
 class ZamnBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.db_pool = None
 
     async def setup_hook(self) -> None:
+        try:
+            print("Connecting to database.")
+            self.db_pool = await acpg.create_pool(db_url)
+            await self.db_pool.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id BIGINT PRIMARY KEY,
+                    points INTEGER DEFAULT 0,
+                    last_daily TIMESTAMP WITHOUT TIME ZONE DEFAULT '2000-01-01 00:00:00'
+                )
+            ''')
+            print("PostgreSQL connection pool established and table checked.")
+        except Exception as e:
+            print(f"Failed to connect to PostgreSQL: {e}")
+
         print("Running setup_hook: Loading Cogs...")
         await self.load_cogs()
+        await self.tree.sync()
     print("Cogs loaded. Connecting to Discord...")
     async def load_cogs(self):
         for extension_name in INITIAL_COGS:
@@ -74,10 +92,9 @@ async def reload_error(ctx, error):
 async def on_member_join(member):
     await member.send(f"Welcome to the server {member.name}")
 
-if is_development is False:
-    
-    bot.run(token=token)
-else:
+if is_development:
     handler = log.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-
     bot.run(token=token,log_handler=handler,log_level=log.DEBUG)
+else:
+    keep_alive()
+    bot.run(token=token)
