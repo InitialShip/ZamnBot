@@ -8,15 +8,14 @@ import datetime
 
 load_dotenv()
 db_url = os.getenv('DATABASE_URL')
-SLOTS_SYMBOLS = ["🍒", "🍇", "🍊", "🍋", "💰", "💎"]
-WIN_MULTIPLIER = 5
+
 COOLDOWN_SECONDS = 8 * 60 * 60 #8 hours
 DAILY_REWARD = 500
 
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pool = self.bot.db_pool
+        self.pool: acpg.Pool = self.bot.db_pool
         if self.pool is None:
             print("Warning: Database pool is None in Economy cog!")
         print("Economy Cog ready!")
@@ -91,6 +90,7 @@ class Economy(commands.Cog):
             await ctx.send("An error occurred while processing your claim.")
 
     @commands.hybrid_command(name='balance', aliases=['b','bl'], description="Display your current credits")
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def balance(self, ctx: commands.Context, member: discord.Member = None):
         target = member or ctx.author
         if target.bot:
@@ -119,9 +119,44 @@ class Economy(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name = "sharecredits", aliases=["sc"], description="Share your credits to other user")
-    async def  share_credits(self, ctx:commands.Context, member: discord.Member):
-        await ctx.send("This command is for sharing credits")
+    @commands.hybrid_command(name = "share", aliases=["sc"], description="Share your credits to other user")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def  share_credits(self, ctx: commands.Context, member: discord.Member, amount: int):
+        if member.bot:
+            return await ctx.send("You can't give points to bots.")
+        if member is ctx.author:
+            return await ctx.send("You can't give credits to yourself.")
+        
+        try:
+            async with self.pool.acquire() as conn:
+                conn : acpg.Connection
+
+                current_points = await conn.fetchval(
+                "SELECT points FROM users WHERE user_id = $1", 
+                ctx.author.id
+                )
+                if current_points < amount:
+                    return await ctx.send(f"**{ctx.author.display_name}**| Insufficient Credits")
+                await conn.execute(
+                    "INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", 
+                    member.id
+                )
+                async with conn.transaction():
+                    await conn.execute(
+                        "UPDATE users SET points = points - $2 WHERE user_id = $1",
+                        ctx.author.id,
+                        amount
+                    )
+                    await conn.execute(
+                        "UPDATE users SET points = points + $2 WHERE user_id = $1",
+                        member.id,
+                        amount
+                    )
+        except Exception as e:
+            print(f"Share command error for {ctx.author.id}: {e}")
+            await ctx.send("An error occurred while processing your share command.")
+
+        await ctx.send(f"**{ctx.author.display_name}** gives **{member.display_name}** {amount} credits")
 
     @commands.command(name = "givecredits")
     @commands.is_owner()
@@ -139,30 +174,15 @@ class Economy(commands.Cog):
             return await ctx.reply("There was a problem")
         await ctx.send(f"Gave {member.display_name} {amount} credits! New Balance: {new_balance}")
 
-    @commands.hybrid_command(name='slots', aliases=['sl'], description="Play slots machine")
-    async def slots(self, ctx):
-        results = [random.choice(SLOTS_SYMBOLS) for _ in range(3)]
-        display_results = f"|{'|'.join(results)}|"
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx: commands.Context, error):
+        if ctx.command not in self.get_commands():
+            return
+        if isinstance(error, commands.MissingRequiredArgument):
+            return await ctx.send(f"**{ctx.author.display_name}** |🚫 Invalid argument.")
+        if isinstance(error, commands.CommandOnCooldown):
+            return await ctx.send(f"**{ctx.author.display_name}** |⏳ Wait {round(error.retry_after,1)}s to use that command again.")
+        
 
-        if results[0] == results[1] == results [2]:
-            winnings = 100 * WIN_MULTIPLIER
-            message = (
-                f"**🎰 SLOT MACHINE SPIN 🎰**\n\n"
-                f"**{display_results}**\n\n"
-                f"🎉 **JACKPOT!** {results[0]}x3! You won {winnings} points! 🎉"
-            )
-        else:
-            message = (
-                f"**🎰 SLOT MACHINE SPIN 🎰**\n\n"
-                f"**{display_results}**\n\n"
-                f"Try again next time! Better luck soon. 💔"
-            )
-
-        await ctx.send(message)
-
-    @commands.hybrid_command(name = "roulette", description='Play a roulette game')
-    async def  roulette(self, ctx:commands.Context):
-        await ctx.send("Still under development 🦭")
-
-async def setup(bot):
+async def setup(bot: commands.Bot):
     await bot.add_cog(Economy(bot))
