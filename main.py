@@ -24,7 +24,8 @@ INITIAL_COGS = [
     'cogs.fun',
     'cogs.moderation',
     'cogs.utilities',
-    'cogs.economy'
+    'cogs.economy',
+    'cogs.gamba'
 ]
 
 class ZamnBot(commands.Bot):
