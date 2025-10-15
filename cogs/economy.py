@@ -1,16 +1,19 @@
 import discord 
 from discord.ext import commands
-import random
 import asyncpg as acpg
 import os
 from dotenv import load_dotenv
 import datetime
+import math
 
 load_dotenv()
 db_url = os.getenv('DATABASE_URL')
 
-COOLDOWN_SECONDS = 8 * 60 * 60 #8 hours
+CLAIM_COOLDOWN_SECONDS = 8 * 60 * 60 #8 hours
+MAX_CLAIM_MISS_SECONDS = 2 * 24 * 60 * 60 #2 days
 DAILY_REWARD = 500
+INTEREST_RATE = 0.0025
+
 
 class Economy(commands.Cog):
     def __init__(self, bot):
@@ -24,8 +27,12 @@ class Economy(commands.Cog):
     async def on_ready(self):
         if self.pool is not None:
             return
+        
+    def calculate_interest(self, daily_count):
+        today_points= round(DAILY_REWARD*math.pow((1 + INTEREST_RATE),daily_count))
+        return today_points
 
-    async def create_user_if_not_exist(self, user_id):
+    async def create_user_if_not_exist(self, user_id) -> None:
         await self.pool.execute(
             "INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", user_id
         )
@@ -57,33 +64,52 @@ class Economy(commands.Cog):
         current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         try:
             async with self.pool.acquire() as conn:
+                conn : acpg.Connection
+
                 last_daily = await conn.fetchval(
                     "SELECT last_daily FROM users WHERE user_id = $1",
                     user_id
                 )
                 time_since_last_claim = current_time - last_daily
-                seconds_remaining = COOLDOWN_SECONDS - time_since_last_claim.total_seconds()
+                seconds_remaining = CLAIM_COOLDOWN_SECONDS - time_since_last_claim.total_seconds()
                 if seconds_remaining > 0:
                     minutes, seconds = divmod(seconds_remaining, 60)
                     hours, minutes = divmod(minutes, 60)
                 
                     return await ctx.send(
-                        f"⏰ You are on cooldown! Claim your next daily in "
+                        f"⏰ No **{ctx.author.display_name}**! You need to wait "
                         f"**{int(hours)}h {int(minutes)}m {int(seconds)}s**."
                     )
                 
-                new_balance = await conn.fetchval(
-                    "UPDATE users SET points = points + $2, last_daily = $3 WHERE user_id = $1 RETURNING points",
-                    user_id,
-                    DAILY_REWARD,
-                    current_time  # Save the current time (UTC)
-                )
+                if abs(seconds_remaining) >= MAX_CLAIM_MISS_SECONDS:
+                    await conn.execute (
+                        "UPDATE users SET daily_count = 0 WHERE user_id = $1",
+                        user_id
+                    )
+                
+                async with conn.transaction():
+                    daily_count = await conn.fetchval(
+                        "SELECT daily_count FROM users WHERE user_id = $1",
+                        user_id
+                    )
+                    daily_bonus = self.calculate_interest(daily_count=daily_count)
+                    new_balance = await conn.fetchval(
+                        "UPDATE users SET points = points + $2, last_daily = $3, daily_count = daily_count + 1 WHERE user_id = $1 RETURNING points",
+                        user_id,
+                        daily_bonus,
+                        current_time  # Save the current time (UTC)
+                    )
+
+                body = f"""
+                🪙 You received **{daily_bonus} points**!
+                ✅ You're on a **{daily_count+1} claim streak**!
+                """
                 embed = discord.Embed(
-                title="🎁 Daily Reward Claimed!",
-                description=f"You received **{DAILY_REWARD:,}** points.",
+                title="💰 Reward Claimed! [8 Hours]",
+                description=body,
                 color=discord.Color.gold()
                 )
-                embed.set_footer(text=f"Your new balance is: {new_balance:,} points")
+                embed.set_footer(text=f"Your new balance is: {new_balance} points")
                 await ctx.send(embed=embed)
         except Exception as e:
             print(f"Daily command error for {ctx.author.id}: {e}")
@@ -183,6 +209,5 @@ class Economy(commands.Cog):
         if isinstance(error, commands.CommandOnCooldown):
             return await ctx.send(f"**{ctx.author.display_name}** |⏳ Wait {round(error.retry_after,1)}s to use that command again.")
         
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(Economy(bot))
