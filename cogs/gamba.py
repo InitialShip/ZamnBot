@@ -37,8 +37,18 @@ class Gamba(commands.Cog):
         await ctx.send(message)
 
     @commands.hybrid_command(name = "roulette", description='Play a roulette game')
-    async def  roulette(self, ctx:commands.Context):
-        await ctx.send("Still under development 🦭")
+    async def  roulette(self, ctx:commands.Context, trials:int = 1):
+        CHAMBER = 6
+        await ctx.send(f"Pulling the trigger for {trials} times...")
+        marked_chamber = random.randint(1, CHAMBER)
+        for trial in range(trials):
+            pull_result = random.randint(1, CHAMBER)
+
+            if marked_chamber == pull_result:
+                await ctx.send(f"**{ctx.author.display_name}**, You are dead after {trial+1} times")
+                return
+
+        await ctx.send(f"**{ctx.author.display_name}**, You are still alive!")
 
 
 async def setup(bot: commands.Bot):
