@@ -5,20 +5,21 @@ import os
 from dotenv import load_dotenv
 import datetime
 import math
+from databaseHandler import DatabaseHandler
 
 load_dotenv()
 db_url = os.getenv('DATABASE_URL')
 
 CLAIM_COOLDOWN_SECONDS = 8 * 60 * 60 #8 hours
-MAX_CLAIM_MISS_SECONDS = 2 * 24 * 60 * 60 #2 days
 DAILY_REWARD = 500
-INTEREST_RATE = 0.0025
+INTEREST_RATE = 0.005 #0.5%
 
 
 class Economy(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.pool: acpg.Pool = self.bot.db_pool
+        self.handler:DatabaseHandler = self.bot.db_handler
         if self.pool is None:
             print("Warning: Database pool is None in Economy cog!")
         print("Economy Cog ready!")
@@ -27,24 +28,11 @@ class Economy(commands.Cog):
     async def on_ready(self):
         if self.pool is not None:
             return
-        
-    def calculate_interest(self, daily_count):
-        today_points= round(DAILY_REWARD*math.pow((1 + INTEREST_RATE),daily_count))
-        return today_points
 
     async def create_user_if_not_exist(self, user_id) -> None:
         await self.pool.execute(
             "INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", user_id
         )
-
-    async def get_user_balance(self, user_id) -> int:
-        await self.create_user_if_not_exist(user_id)
-
-        points = await self.pool.fetchval(
-            "SELECT points FROM users WHERE user_id = $1", 
-            user_id
-        )
-        return points
     
     async def give_user_balance(self, user_id, amount) -> int:
         await self.create_user_if_not_exist(user_id)
@@ -59,51 +47,17 @@ class Economy(commands.Cog):
     @commands.hybrid_command(name = "daily", aliases=["claim"], description="Claim your daily credits")
     async def daily(self, ctx:commands.Context):
         user_id = ctx.author.id
-        await self.create_user_if_not_exist(user_id)
 
-        current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         try:
-            async with self.pool.acquire() as conn:
-                conn : acpg.Connection
-
-                last_daily = await conn.fetchval(
-                    "SELECT last_daily FROM users WHERE user_id = $1",
-                    user_id
-                )
-                time_since_last_claim = current_time - last_daily
-                seconds_remaining = CLAIM_COOLDOWN_SECONDS - time_since_last_claim.total_seconds()
-                if seconds_remaining > 0:
-                    minutes, seconds = divmod(seconds_remaining, 60)
-                    hours, minutes = divmod(minutes, 60)
-                
-                    return await ctx.send(
-                        f"⏰ No **{ctx.author.display_name}**! You need to wait "
-                        f"**{int(hours)}h {int(minutes)}m {int(seconds)}s**."
-                    )
-                
-                if abs(seconds_remaining) >= MAX_CLAIM_MISS_SECONDS:
-                    await conn.execute (
-                        "UPDATE users SET daily_count = 0 WHERE user_id = $1",
-                        user_id
-                    )
-                
-                async with conn.transaction():
-                    daily_count = await conn.fetchval(
-                        "SELECT daily_count FROM users WHERE user_id = $1",
-                        user_id
-                    )
-                    daily_bonus = self.calculate_interest(daily_count=daily_count)
-                    new_balance = await conn.fetchval(
-                        "UPDATE users SET points = points + $2, last_daily = $3, daily_count = daily_count + 1 WHERE user_id = $1 RETURNING points",
-                        user_id,
-                        daily_bonus,
-                        current_time  # Save the current time (UTC)
-                    )
-
-                body = f"""
-                🪙 You received **{daily_bonus} points**!
-                ✅ You're on a **{daily_count+1} claim streak**!
-                """
+            claimed, daily_bonus, new_balance, streak, seconds_remaining = await self.handler.process_daily_claim(
+                user_id=user_id,
+                daily_amount=DAILY_REWARD,
+                interest_rate=INTEREST_RATE,
+                cooldown=CLAIM_COOLDOWN_SECONDS
+            )
+            if claimed:
+                body = (f"🪙 You received **{daily_bonus} points**!\n"
+                        f"✅ You're on a **{streak+1} claim streak**!")
                 embed = discord.Embed(
                 title="💰 Reward Claimed! [8 Hours]",
                 description=body,
@@ -111,6 +65,15 @@ class Economy(commands.Cog):
                 )
                 embed.set_footer(text=f"Your new balance is: {new_balance} points")
                 await ctx.send(embed=embed)
+            else:
+                minutes, seconds = divmod(seconds_remaining, 60)
+                hours, minutes = divmod(minutes, 60)
+                
+                return await ctx.send(
+                    f"⏰ No **{ctx.author.display_name}**! You need to wait "
+                    f"**{int(hours)}h {int(minutes)}m {int(seconds)}s**."
+                )
+
         except Exception as e:
             print(f"Daily command error for {ctx.author.id}: {e}")
             await ctx.send("An error occurred while processing your claim.")
@@ -123,7 +86,7 @@ class Economy(commands.Cog):
             return await ctx.send("Sir, That's a bot")
         user_id = target.id
         try:
-            balance = await self.get_user_balance(user_id=user_id)
+            record = await self.handler.get_user_balance(user_id)
         except Exception as e: 
             print(f"Error while getting user balance with id {user_id} : {e}")
             return await ctx.reply("There was a problem can not get your balance")
@@ -138,10 +101,12 @@ class Economy(commands.Cog):
 
         if target == ctx.author:
             embed.description = f"**{target.display_name}**, your current balance is:"
-            embed.add_field(name="Current Points", value=f"**{balance:,}** points", inline=False)
+            embed.add_field(name="Current Points", value=f"**{record['points']}** points", inline=False)
+            embed.add_field(name="Streak", value=f"**{record['daily_count']}** 🔥", inline=False)
         else:
             embed.description = f"**{target.display_name}**'s current balance is:"
-            embed.add_field(name="Current Points", value=f"**{balance:,}** points", inline=False)
+            embed.add_field(name="Current Points", value=f"**{record['points']}** points", inline=False)
+            embed.add_field(name="Streak", value=f"**{record['daily_count']}** 🔥", inline=False)
 
         await ctx.send(embed=embed)
 

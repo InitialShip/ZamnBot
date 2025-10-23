@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 import asyncpg as acpg
 from keep_alive import keep_alive
+from databaseHandler import DatabaseHandler
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
@@ -28,10 +29,11 @@ INITIAL_COGS = [
     'cogs.gamba'
 ]
 
-class ZamnBot(commands.Bot):
+class BotRunner(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.db_pool = None
+        self.db_pool: acpg.Pool = None
+        self.db_handler: DatabaseHandler = None
 
     async def setup_hook(self) -> None:
         try:
@@ -44,6 +46,7 @@ class ZamnBot(commands.Bot):
                     last_daily TIMESTAMP WITHOUT TIME ZONE DEFAULT '2000-01-01 00:00:00'
                 )
             ''')
+            self.db_handler = DatabaseHandler(self.db_pool)
             print("PostgreSQL connection pool established and table checked.")
         except Exception as e:
             print(f"Failed to connect to PostgreSQL: {e}")
@@ -59,6 +62,9 @@ class ZamnBot(commands.Bot):
                 print(f'Successfully loaded extension: {extension_name}')
             except Exception as e:
                 print(f'Failed to load extension {extension_name}. Reason: {e}')
+    
+    async def inital_table(self):
+        pass
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -66,7 +72,7 @@ class ZamnBot(commands.Bot):
         await self.change_presence(activity=discord.Game(name=f"{command_prefix}help | 💣"))
 
 
-bot = ZamnBot(command_prefix, intents=intents)
+bot = BotRunner(command_prefix, intents=intents)
 
 @bot.command(name="reload", aliases=['r'])    
 @commands.is_owner()
@@ -88,6 +94,20 @@ async def reload(ctx, extension_name: str):
 async def reload_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f"Usage: {command_prefix}reload <module_name>")
+
+@bot.command(name="reconnect")
+@commands.is_owner()
+async def reconnect(ctx: commands.Context):
+    return await ctx.send("Still develop")
+    
+    success = await bot.db_handler.reconnect()
+
+    if success:
+        await ctx.send("Connection re-established successfully!")
+        await bot.inital_table()
+    else:
+        await ctx.send("Failed to re-establish database connection.") 
+
 
 @bot.event
 async def on_member_join(member):
