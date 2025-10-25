@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 import datetime
 import math
-from databaseHandler import DatabaseHandler
+from databasehandler import DatabaseHandler
 
 load_dotenv()
 db_url = os.getenv('DATABASE_URL')
@@ -28,21 +28,6 @@ class Economy(commands.Cog):
     async def on_ready(self):
         if self.pool is not None:
             return
-
-    async def create_user_if_not_exist(self, user_id) -> None:
-        await self.pool.execute(
-            "INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", user_id
-        )
-    
-    async def give_user_balance(self, user_id, amount) -> int:
-        await self.create_user_if_not_exist(user_id)
-
-        new_points = await self.pool.fetchval(
-            "UPDATE users SET points = points + $2 WHERE user_id = $1 RETURNING points",
-            user_id,
-            amount
-        )
-        return new_points
 
     @commands.hybrid_command(name = "daily", aliases=["claim"], description="Claim your daily credits")
     async def daily(self, ctx:commands.Context):
@@ -118,37 +103,17 @@ class Economy(commands.Cog):
         if member is ctx.author:
             return await ctx.send("You can't give credits to yourself.")
         
-        try:
-            async with self.pool.acquire() as conn:
-                conn : acpg.Connection
+        processed, new_balance = await self.handler(ctx.author.id, member.id,amount)
 
-                current_points = await conn.fetchval(
-                "SELECT points FROM users WHERE user_id = $1", 
-                ctx.author.id
-                )
-                if current_points < amount:
-                    return await ctx.send(f"**{ctx.author.display_name}**| Insufficient Credits")
-                await conn.execute(
-                    "INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", 
-                    member.id
-                )
-                async with conn.transaction():
-                    await conn.execute(
-                        "UPDATE users SET points = points - $2 WHERE user_id = $1",
-                        ctx.author.id,
-                        amount
-                    )
-                    await conn.execute(
-                        "UPDATE users SET points = points + $2 WHERE user_id = $1",
-                        member.id,
-                        amount
-                    )
-        except Exception as e:
-            print(f"Share command error for {ctx.author.id}: {e}")
-            await ctx.send("An error occurred while processing your share command.")
-
-        await ctx.send(f"**{ctx.author.display_name}** gives **{member.display_name}** {amount} credits")
-
+        if processed:
+            if new_balance > 0:
+                await ctx.send(f"**{ctx.author.display_name}** gives **{member.display_name}** {amount} credits")
+            else:
+                await ctx.send(f"**{ctx.author.display_name}**, you don't have enough points.")
+        else:
+            await ctx.send("There is an error while processing the command.")
+                
+        
     @commands.command(name = "givecredits")
     @commands.is_owner()
     async def give_balance(self, ctx,member: discord.Member, amount: int):
@@ -159,7 +124,7 @@ class Economy(commands.Cog):
         target = member
         user_id = target.id
         try:
-            new_balance = await self.give_user_balance(user_id=user_id,amount=amount)
+            new_balance = await self.handler.add_points(user_id=user_id,amount=amount)
         except Exception as e:
             print(f"Error while giving user balance with id {user_id} : {e}")
             return await ctx.reply("There was a problem")
