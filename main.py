@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 import asyncpg as acpg
 from keep_alive import keep_alive
-from databaseHandler import DatabaseHandler
+from databasehandler import DatabaseHandler
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
