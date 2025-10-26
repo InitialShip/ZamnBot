@@ -12,7 +12,7 @@ class Memetics(commands.Cog):
         self.pool: acpg.Pool = self.bot.db_pool
         self.handler:DatabaseHandler = self.bot.db_handler
 
-    @commands.hybrid_command(name="showmemtics")
+    @commands.hybrid_command(name="showmemetics")
     async def show_memetics(self, ctx: commands.Context):
         embed = discord.Embed(
             title="Memetics",
