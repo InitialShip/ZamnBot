@@ -21,7 +21,7 @@ class DatabaseHandler:
         await self.pool.execute(
                     "INSERT INTO users (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING", 
                     user_id)
-        
+    #Get user balance
     async def get_user_balance(self, user_id) -> List[acpg.Record]:
         await self.create_user_if_not_exist(user_id)
         
@@ -35,12 +35,21 @@ class DatabaseHandler:
 
         query = "SELECT daily_count FROM users WHERE user_id = $1"
         return await self.pool.fetchval(query,user_id)
-    #Add Point
+    #Add Points
     async def add_points(self, user_id: int, amount: int) -> int:
         await self.create_user_if_not_exist(user_id)
 
         new_balance = await self.pool.fetchval(
             "UPDATE users SET points = points + $2 WHERE user_id = $1 RETURNING points",
+            user_id
+            ,amount)
+        return new_balance
+    #Reduce Points
+    async def reduce_points(self, user_id: int, amount: int) -> int:
+        await self.create_user_if_not_exist(user_id)
+        #check for avaiable points
+        new_balance = await self.pool.fetchval(
+            "UPDATE users SET points = points - $2 WHERE user_id = $1 RETURNING points",
             user_id
             ,amount)
         return new_balance
@@ -50,10 +59,12 @@ class DatabaseHandler:
         Returns
         -------
         tuple[bool, int, int, int, int]
-            A 3-element tuple containing:
+            A 5-element tuple containing:
             1. bool: True if the bonus was successfully claimed, False otherwise.
-            2. int: The user's new (or current) total points.
-            3. Optional[timedelta]: If the claim was unsuccessful (False), this is the 
+            2. int: Today claim points.
+            3. int: The user's new (or current) total points.
+            4. int: The user's claim streak
+            5. Optional[timedelta]: If the claim was unsuccessful (False), this is the 
                time remaining until the user can claim again. If successful (True), this is None.
         """
         current_time = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
@@ -109,6 +120,10 @@ class DatabaseHandler:
             print(f"transfer points error for {src_user_id}: {e}")
             return False, 0
         
-
+    #Get All Memetics
+    async def get_memetics(self) -> List[acpg.Record]:
+        records = await self.pool.fetch(
+            "SELECT name, icon, description FROM memetics")
+        return records
     async def reconnect(self) -> bool:
         pass
