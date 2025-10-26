@@ -26,7 +26,8 @@ INITIAL_COGS = [
     'cogs.moderation',
     'cogs.utilities',
     'cogs.economy',
-    'cogs.gamba'
+    'cogs.gamba',
+    'cogs.memetics'
 ]
 
 class BotRunner(commands.Bot):
