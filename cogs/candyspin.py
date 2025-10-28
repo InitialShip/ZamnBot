@@ -271,24 +271,7 @@ class CandySpin(commands.Cog):
         embed.set_image(url=gif)
         await ctx.send(embed=embed)
 
-    @commands.command(name="twerk")
-    async def twerk(self, ctx, member: discord.Member = None):
-        gif = random.choice(TWERK_GIFS)
-        if member:
-            desc = f"🛸 Alien twerks on {member.mention}!"
-        else:
-            desc = "🛸 Alien twerk invasion!"
-        embed = discord.Embed(title="Alien Attack!", description=desc, color=0xFFD700)
-        embed.set_image(url=gif)
-        await ctx.send(embed=embed)
-
-    @commands.command(name="kekw")
-    async def kekw(self, ctx):
-        gif = random.choice(KEKW_GIFS)
-        embed = discord.Embed(title="KEKW", color=0xFF4500)
-        embed.set_image(url=gif)
-        await ctx.send(embed=embed)
-
 
 async def setup(bot):
     await bot.add_cog(CandySpin(bot))
+
