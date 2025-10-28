@@ -27,6 +27,7 @@ INITIAL_COGS = [
     'cogs.utilities',
     'cogs.economy',
     'cogs.gamba',
+    'cogs.candyspin',
     'cogs.memetics'
 ]
 
@@ -119,4 +120,5 @@ if is_development:
     bot.run(token=token,log_handler=handler,log_level=log.DEBUG)
 else:
     keep_alive()
+
     bot.run(token=token)
