@@ -271,7 +271,5 @@ class CandySpin(commands.Cog):
         embed.set_image(url=gif)
         await ctx.send(embed=embed)
 
-
 async def setup(bot):
     await bot.add_cog(CandySpin(bot))
-

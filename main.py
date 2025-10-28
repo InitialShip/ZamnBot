@@ -23,6 +23,7 @@ if command_prefix is None:
 
 INITIAL_COGS = [
     'cogs.fun',
+    'cogs.actions',
     'cogs.moderation',
     'cogs.utilities',
     'cogs.economy',
@@ -70,7 +71,7 @@ class BotRunner(commands.Bot):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(f"Zamn ! We are ready to go in, {self.user.name}")
+        print(f" {self.user.name}: Zamn ! I am online now")
         await self.change_presence(activity=discord.Game(name=f"{command_prefix}help | 💣"))
 
 
