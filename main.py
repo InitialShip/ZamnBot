@@ -23,7 +23,7 @@ if command_prefix is None:
 
 INITIAL_COGS = [
     'cogs.fun',
-    'cogs.actions'
+    'cogs.actions',
     'cogs.moderation',
     'cogs.utilities',
     'cogs.economy',
@@ -120,4 +120,5 @@ if is_development:
     bot.run(token=token,log_handler=handler,log_level=log.DEBUG)
 else:
     keep_alive()
+
     bot.run(token=token)
