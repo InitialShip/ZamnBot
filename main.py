@@ -28,6 +28,7 @@ INITIAL_COGS = [
     'cogs.utilities',
     'cogs.economy',
     'cogs.gamba',
+    'cogs.candyspin',
     'cogs.memetics'
 ]
 
