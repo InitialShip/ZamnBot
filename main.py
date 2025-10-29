@@ -22,14 +22,12 @@ COMMAND_PREFIX = os.getenv("COMMAND_PREFIX", "z!")
 IS_DEVELOPMENT = os.getenv("IS_DEVELOPMENT", "false").lower() == "true"
 DB_URL = os.getenv("DATABASE_URL")
 
-
 # ============================================================
 # Discord Intents
 # ============================================================
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
-
 
 # ============================================================
 # Bot Class Definition
@@ -61,7 +59,7 @@ class BotRunner(commands.Bot):
         print("✅ All cogs loaded successfully.")
 
     async def on_ready(self):
-        print(f"🚀 Logged in as {self.user.name}")
+        print(f"Logged in as {self.user.name}")
         await self.change_presence(activity=discord.Game(name=f"{COMMAND_PREFIX}help | 💣"))
 
 # ============================================================
@@ -69,6 +67,39 @@ class BotRunner(commands.Bot):
 # ============================================================
 bot = BotRunner(command_prefix=COMMAND_PREFIX, intents=intents)
 
+@bot.command(name="reload", aliases=['r'])    
+@commands.is_owner()
+async def reload(ctx, extension_name: str):
+    if extension_name is None:
+        return
+    module_path = f'cogs.{extension_name}'
+    try:
+        await bot.reload_extension(module_path)
+        await ctx.send(f"Successfully reloaded: `{extension_name}`")
+    except commands.ExtensionNotLoaded:
+        await ctx.send(f"`{extension_name}` is not loaded. Attempting to load instead...")
+        await bot.load_extension(module_path)
+        await ctx.send(f"Successfully loaded: `{extension_name}` instead of reloading.")
+    except Exception as e:
+        await ctx.send(f"Failed to reload `{extension_name}`. Error: {e}")
+
+@reload.error
+async def reload_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"Usage: {COMMAND_PREFIX}reload <module_name>")
+
+@bot.command(name="reconnect")
+@commands.is_owner()
+async def reconnect(ctx: commands.Context):
+    return await ctx.send("Still developing")
+    
+    success = await bot.db_handler.reconnect()
+
+    if success:
+        await ctx.send("Connection re-established successfully!")
+        await bot.inital_table()
+    else:
+        await ctx.send("Failed to re-establish database connection.") 
 
 # ============================================================
 # Hot reload command
@@ -100,3 +131,5 @@ if __name__ == "__main__":
     else:
         keep_alive()
         bot.run(token=TOKEN)
+
+
