@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from core.databasehandler import DatabaseHandler
 import datetime
 
-
 class Memetics(commands.Cog):
     def __init__(self, bot: commands.Bot):
         super().__init__()
@@ -26,7 +25,6 @@ class Memetics(commands.Cog):
             icon_url=ctx.author.display_avatar.url,
         )
         await ctx.send(embed=embed)
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Memetics(bot))

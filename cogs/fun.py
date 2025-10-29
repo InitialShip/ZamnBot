@@ -10,11 +10,9 @@ SPANK_GIF_URL = [
     "https://cdn.discordapp.com/attachments/1422926133250359347/1431559928451039323/image0.gif?ex=68fddb94&is=68fc8a14&hm=4e4a2e84d211a1312c963a13e46c0366c937b1f11074c07fbe53c63a3057d826&",
 ]
 
-
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("Fun Cog ready!")
 
     @commands.command(name="hello")
     async def hello(self, ctx):

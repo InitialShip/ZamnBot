@@ -64,7 +64,6 @@ class BotRunner(commands.Bot):
         print(f"🚀 Logged in as {self.user.name}")
         await self.change_presence(activity=discord.Game(name=f"{COMMAND_PREFIX}help | 💣"))
 
-
 # ============================================================
 # Bot Initialization
 # ============================================================

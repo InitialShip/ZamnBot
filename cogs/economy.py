@@ -22,7 +22,6 @@ class Economy(commands.Cog):
         self.handler: DatabaseHandler = self.bot.db_handler
         if self.pool is None:
             print("Warning: Database pool is None in Economy cog!")
-        print("Economy Cog ready!")
 
     @commands.Cog.listener()
     async def on_ready(self):
