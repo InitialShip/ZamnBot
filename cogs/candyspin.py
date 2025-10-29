@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 SPINS_PER_CYCLE = 5
 RESET_HOURS = 8
 WEEK_SECONDS = 7 * 24 * 3600
-WEEKLY_ROLE_DURATION_DAYS = 6
+WEEKLY_ROLE_DURATION_DAYS = 6  
 
 ROLES = {
     "participation": "🍭SweetLover",
@@ -17,7 +17,7 @@ ROLES = {
     "top1_week": "🍬SugarPlum",
     "top2_week": "🍯HoneyBun",
     "top3_week": "🍫SweetTooth",
-    "losers_week": "🍩LostCandy",
+    "losers_week": "🍩LostCandy"
 }
 
 CANDY_ITEMS = [
@@ -30,7 +30,7 @@ CANDY_ITEMS = [
     ("🍧 Shaved Ice", 9),
     ("🍰 Cupcake", 15),
     ("🍡 Dango", 11),
-    ("🍯 Honey Candy", 20),
+    ("🍯 Honey Candy", 20)
 ]
 
 SPANK_GIFS = [
@@ -41,13 +41,15 @@ TWERK_GIFS = [
     "https://media2.giphy.com/media/egI6J8oXV2744CcOqP/giphy.gif",
 ]
 
-KEKW_GIFS = ["https://media4.giphy.com/media/L3nWlmgyqCeU8/giphy.gif"]
+KEKW_GIFS = [
+    "https://media4.giphy.com/media/L3nWlmgyqCeU8/giphy.gif"
+]
 
 
 class CandySpin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self._last_spin_channel = None
+        self._last_spin_channel = None  
         self.weekly_job_started = False
 
     async def ensure_table(self):
@@ -76,8 +78,7 @@ class CandySpin(commands.Cog):
         async with self.bot.db_pool.acquire() as conn:
             await conn.execute(
                 "INSERT INTO spins (user_id, total_points, spins_used, last_spin, weekly_points) "
-                "VALUES ($1, 0, 0, '2000-01-01 00:00:00', 0) ON CONFLICT (user_id) DO NOTHING",
-                user_id,
+                "VALUES ($1, 0, 0, '2000-01-01 00:00:00', 0) ON CONFLICT (user_id) DO NOTHING", user_id
             )
 
     async def update_after_spin(self, user_id: int, pts: int, now: datetime):
@@ -85,9 +86,7 @@ class CandySpin(commands.Cog):
             await conn.execute(
                 "UPDATE spins SET total_points = total_points + $1, weekly_points = weekly_points + $1, "
                 "spins_used = spins_used + 1, last_spin = $2 WHERE user_id = $3",
-                pts,
-                now,
-                user_id,
+                pts, now, user_id
             )
 
     async def reset_spins_if_needed(self, user_id: int, now: datetime):
@@ -130,9 +129,7 @@ class CandySpin(commands.Cog):
                 remaining_seconds = 0
             hours, rem = divmod(int(remaining_seconds), 3600)
             minutes, seconds = divmod(rem, 60)
-            await ctx.send(
-                f"🍭 You’ve used all your spins! Next reset in **{hours}h {minutes}m {seconds}s**."
-            )
+            await ctx.send(f"🍭 You’ve used all your spins! Next reset in **{hours}h {minutes}m {seconds}s**.")
             return
 
         item, pts = random.choice(CANDY_ITEMS)
@@ -145,7 +142,7 @@ class CandySpin(commands.Cog):
                 try:
                     await ctx.author.add_roles(role)
                 except Exception:
-                    pass
+                    pass  
 
         self._last_spin_channel = ctx.channel
 
@@ -153,7 +150,7 @@ class CandySpin(commands.Cog):
         used = row_after["spins_used"]
         embed = discord.Embed(
             description=f"🎉 {ctx.author.mention} spun and got **{item}** worth **{pts} points!**\n({used}/{SPINS_PER_CYCLE} spins used)",
-            color=0xFFB6C1,
+            color=0xFFB6C1
         )
         embed.set_author(name=f"{ctx.author.display_name}'s Candy Pull")
         await ctx.send(embed=embed)
@@ -162,9 +159,7 @@ class CandySpin(commands.Cog):
     async def rank(self, ctx):
         """Show top 10 candy collectors by total_points."""
         async with self.bot.db_pool.acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT user_id, total_points FROM spins ORDER BY total_points DESC LIMIT 10"
-            )
+            rows = await conn.fetch("SELECT user_id, total_points FROM spins ORDER BY total_points DESC LIMIT 10")
         if not rows:
             await ctx.send("No candy points yet — go spin with spin🍭")
             return
@@ -183,15 +178,11 @@ class CandySpin(commands.Cog):
         """Announce weekly top 3 and reset weekly_points (runs every 7 days)."""
         channel = self._last_spin_channel
         if channel is None:
-            print(
-                "CandySpin: no recent spin channel stored; weekly announcement skipped."
-            )
+            print("CandySpin: no recent spin channel stored; weekly announcement skipped.")
             return
 
         async with self.bot.db_pool.acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT user_id, weekly_points FROM spins ORDER BY weekly_points DESC LIMIT 3"
-            )
+            rows = await conn.fetch("SELECT user_id, weekly_points FROM spins ORDER BY weekly_points DESC LIMIT 3")
         if not rows:
             await channel.send("No spins this week — no Candy winners! 🍭")
             return
@@ -201,7 +192,7 @@ class CandySpin(commands.Cog):
         for i, r in enumerate(rows, start=1):
             uid = r["user_id"]
             pts = r["weekly_points"]
-            member = channel.guild.get_member(uid)
+            member = channel.guild.get_member(uid) 
             mention = member.mention if member else f"<@{uid}>"
             desc_lines.append(f"{i}. {mention} — {pts} pts")
             winners.append((uid, member))
@@ -209,7 +200,7 @@ class CandySpin(commands.Cog):
         embed = discord.Embed(
             title="🏆 Weekly Candy Winners!",
             description="\n".join(desc_lines),
-            color=0xFFD700,
+            color=0xFFD700
         )
         announce_msg = await channel.send(embed=embed)
 
@@ -221,29 +212,20 @@ class CandySpin(commands.Cog):
                 role = discord.utils.get(guild.roles, name=role_name)
                 if role is None:
                     try:
-                        role = await guild.create_role(
-                            name=role_name,
-                            reason="Weekly candy winner role auto-created",
-                        )
+                        role = await guild.create_role(name=role_name, reason="Weekly candy winner role auto-created")
                     except Exception as e:
                         print(f"Failed to create role {role_name}: {e}")
                         role = None
                 if role:
                     try:
                         await member.add_roles(role)
-                        asyncio.create_task(
-                            self._remove_role_after_delay(
-                                member, role, WEEKLY_ROLE_DURATION_DAYS * 24 * 3600
-                            )
-                        )
+                        asyncio.create_task(self._remove_role_after_delay(member, role, WEEKLY_ROLE_DURATION_DAYS * 24 * 3600))
                     except Exception as e:
                         print(f"Failed to add role {role_name} to {member}: {e}")
 
         wing_uids = {uid for uid, _ in winners}
         async with self.bot.db_pool.acquire() as conn:
-            participants = await conn.fetch(
-                "SELECT user_id FROM spins WHERE weekly_points > 0"
-            )
+            participants = await conn.fetch("SELECT user_id FROM spins WHERE weekly_points > 0")
         losers_role_name = ROLES.get("losers_week")
         losers_role = None
         if losers_role_name:
@@ -260,22 +242,14 @@ class CandySpin(commands.Cog):
                 if member and losers_role:
                     try:
                         await member.add_roles(losers_role)
-                        asyncio.create_task(
-                            self._remove_role_after_delay(
-                                member,
-                                losers_role,
-                                WEEKLY_ROLE_DURATION_DAYS * 24 * 3600,
-                            )
-                        )
+                        asyncio.create_task(self._remove_role_after_delay(member, losers_role, WEEKLY_ROLE_DURATION_DAYS * 24 * 3600))
                     except Exception:
                         pass
 
         async with self.bot.db_pool.acquire() as conn:
             await conn.execute("UPDATE spins SET weekly_points = 0")
 
-    async def _remove_role_after_delay(
-        self, member: discord.Member, role: discord.Role, delay_seconds: int
-    ):
+    async def _remove_role_after_delay(self, member: discord.Member, role: discord.Role, delay_seconds: int):
         try:
             await asyncio.sleep(delay_seconds)
             guild = member.guild
@@ -293,13 +267,9 @@ class CandySpin(commands.Cog):
         if not member:
             return await ctx.send("Slap Time Muhehehe!")
         gif = random.choice(SPANK_GIFS)
-        embed = discord.Embed(
-            title=f"👋 {ctx.author.display_name} slaps {member.display_name}!",
-            color=0xFF69B4,
-        )
+        embed = discord.Embed(title=f"👋 {ctx.author.display_name} slaps {member.display_name}!", color=0xFF69B4)
         embed.set_image(url=gif)
         await ctx.send(embed=embed)
-
 
 async def setup(bot):
     await bot.add_cog(CandySpin(bot))

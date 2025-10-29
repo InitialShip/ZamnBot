@@ -4,12 +4,7 @@ import random
 from discord import app_commands
 
 
-MESSAGES_LIMIT = 1000  # human messages
-SPANK_GIF_URL = [
-    "https://cdn.discordapp.com/attachments/1422926133250359347/1431559863221223495/image0.gif?ex=68fddb84&is=68fc8a04&hm=b24b878e705d9df151d93595deb427ecaaab51397c670e5f98884d677b6cfcec&",
-    "https://cdn.discordapp.com/attachments/1422926133250359347/1431559928451039323/image0.gif?ex=68fddb94&is=68fc8a14&hm=4e4a2e84d211a1312c963a13e46c0366c937b1f11074c07fbe53c63a3057d826&",
-]
-
+MESSAGES_LIMIT = 1000 #human messages
 
 class Fun(commands.Cog):
     def __init__(self, bot):
@@ -26,17 +21,7 @@ class Fun(commands.Cog):
             "https://tenor.com/view/bobitos-mimis-michis-gif-943529865427663588"
         )
 
-    @commands.command(name="spank")
-    async def spank(self, ctx: commands.Context, member: discord.Member):
-        embed = discord.Embed(color=discord.Color.blue())
-        embed.set_author(
-            name=f"{ctx.author.display_name} spanks {member.display_name}!",
-            icon_url=ctx.author.display_avatar.url,
-        )
-        embed.set_image(url=random.choice(SPANK_GIF_URL))
-        await ctx.send(embed=embed)
-
-    @commands.command(name="zamn", aliases=["countzamn", "zamnscan"])
+    @commands.command(name='zamn', aliases=["countzamn", "zamnscan"])
     async def zamn(self, ctx):
         await ctx.send(
             "Starting message scan in this channel for [zamn]... This may take a moment."
@@ -52,7 +37,6 @@ class Fun(commands.Cog):
             if message.content.startswith(prefix):
                 continue
             if "zamn" in message.content.lower():
-                # print(f"zamn found in message ID {message.id} from {message.author}")
                 author_name = message.author.display_name
                 zamn_authors[author_name] = zamn_authors.get(author_name, 0) + 1
                 zamn_count += 1
