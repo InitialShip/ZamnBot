@@ -29,8 +29,8 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-if command_prefix is None:
-    command_prefix = "z!"
+if COMMAND_PREFIX is None:
+    COMMAND_PREFIX = "z!"
 
 # ============================================================
 # Bot Class Definition
@@ -87,7 +87,7 @@ async def reload(ctx, extension_name: str):
 @reload.error
 async def reload_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Usage: {command_prefix}reload <module_name>")
+        await ctx.send(f"Usage: {COMMAND_PREFIX}reload <module_name>")
 
 @bot.command(name="reconnect")
 @commands.is_owner()
@@ -107,7 +107,6 @@ async def reconnect(ctx: commands.Context):
 # ============================================================
 bot = BotRunner(command_prefix=COMMAND_PREFIX, intents=intents)
 
-
 # ============================================================
 # Bot Runner
 # ============================================================
@@ -118,3 +117,4 @@ if __name__ == "__main__":
     else:
         keep_alive()
         bot.run(token=TOKEN)
+
