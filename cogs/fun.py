@@ -24,16 +24,6 @@ class Fun(commands.Cog):
             "https://tenor.com/view/bobitos-mimis-michis-gif-943529865427663588"
         )
 
-    @commands.command(name="spank")
-    async def spank(self, ctx: commands.Context, member: discord.Member):
-        embed = discord.Embed(color=discord.Color.blue())
-        embed.set_author(
-            name=f"{ctx.author.display_name} spanks {member.display_name}!",
-            icon_url=ctx.author.display_avatar.url,
-        )
-        embed.set_image(url=random.choice(SPANK_GIF_URL))
-        await ctx.send(embed=embed)
-
     @commands.command(name="zamn", aliases=["countzamn", "zamnscan"])
     async def zamn(self, ctx):
         await ctx.send(

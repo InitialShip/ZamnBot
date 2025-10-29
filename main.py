@@ -71,6 +71,26 @@ bot = BotRunner(command_prefix=COMMAND_PREFIX, intents=intents)
 
 
 # ============================================================
+# Hot reload command
+# ============================================================
+@bot.command(name="reload")
+@commands.is_owner() 
+async def reload(ctx, extension_name: str):
+    if extension_name is None:
+        return
+    module_path = f"cogs.{extension_name}"
+    try:
+        await bot.reload_extension(module_path)
+        await ctx.send(f"✅ Successfully reloaded: `{extension_name}`")
+    except commands.ExtensionNotLoaded:
+        await ctx.send(f"`{extension_name}` is not loaded. Attempting to load instead...")
+        await bot.load_extension(module_path)
+        await ctx.send(f"✅ Successfully loaded: `{extension_name}` instead of reloading.")
+    except Exception as e:
+        await ctx.send(f"❌ Failed to reload `{extension_name}`. Error: {e}")
+
+
+# ============================================================
 # Bot Runner
 # ============================================================
 if __name__ == "__main__":
