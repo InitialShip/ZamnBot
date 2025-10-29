@@ -11,5 +11,6 @@ class Tamagotchi(commands.Cog):
         #     print("Warning: Database pool is None in Economy cog!")
         print("Tamagotchi Cog ready!")
 
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Tamagotchi(bot=bot))

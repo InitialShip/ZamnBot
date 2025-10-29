@@ -1,4 +1,4 @@
-import discord 
+import discord
 from discord.ext import commands
 import random
 from discord import app_commands
@@ -11,17 +11,21 @@ class Fun(commands.Cog):
         self.bot = bot
         print("Fun Cog ready!")
 
-    @commands.command(name='hello')
+    @commands.command(name="hello")
     async def hello(self, ctx):
         await ctx.send(f"Hello, {ctx.author.display_name} <:xdd:1425172451150659727>")
-    
-    @commands.command(name='cat')
+
+    @commands.command(name="cat")
     async def cat(self, ctx):
-        await ctx.reply('https://tenor.com/view/bobitos-mimis-michis-gif-943529865427663588')
+        await ctx.reply(
+            "https://tenor.com/view/bobitos-mimis-michis-gif-943529865427663588"
+        )
 
     @commands.command(name='zamn', aliases=["countzamn", "zamnscan"])
     async def zamn(self, ctx):
-        await ctx.send("Starting message scan in this channel for [zamn]... This may take a moment.")
+        await ctx.send(
+            "Starting message scan in this channel for [zamn]... This may take a moment."
+        )
         zamn_authors = {}
         zamn_count = 0
         total_messages = 0
@@ -33,36 +37,42 @@ class Fun(commands.Cog):
             if message.content.startswith(prefix):
                 continue
             if "zamn" in message.content.lower():
-                #print(f"zamn found in message ID {message.id} from {message.author}")
                 author_name = message.author.display_name
                 zamn_authors[author_name] = zamn_authors.get(author_name, 0) + 1
-                zamn_count +=1
+                zamn_count += 1
 
             total_messages += 1
             if total_messages >= MESSAGES_LIMIT:
                 break
 
         if not zamn_authors:
-            report = (f">>>**Zamn Count Complete**\n"
-                 f"Processed **{total_messages}** messages.\n"
-                 f"Found **0** user messages containing the word [zamn].")
+            report = (
+                f">>>**Zamn Count Complete**\n"
+                f"Processed **{total_messages}** messages.\n"
+                f"Found **0** user messages containing the word [zamn]."
+            )
         else:
-            sorted_authors = sorted(zamn_authors.items(), key=lambda item: item[1], reverse=True)
-            top_list = "".join([
-                f"`{name}`: {count} messages.\n"
-                for name, count in sorted_authors[:5]
-            ])
+            sorted_authors = sorted(
+                zamn_authors.items(), key=lambda item: item[1], reverse=True
+            )
+            top_list = "".join(
+                [f"`{name}`: {count} messages.\n" for name, count in sorted_authors[:5]]
+            )
 
-            report = (f">>> **Zamn Count Complete**\n"
+            report = (
+                f">>> **Zamn Count Complete**\n"
                 f"Processed **{total_messages}** messages.\n"
                 f"Total [zamn] messages found: **{zamn_count}**.\n"
-                f"**Top 5 Zamner:**\n{top_list}")    
-        
+                f"**Top 5 Zamner:**\n{top_list}"
+            )
+
         await ctx.send(report)
-    
-    @commands.command(name='scan')
+
+    @commands.command(name="scan")
     async def scan_for_word(self, ctx, word: str):
-        await ctx.send(f"Starting message scan in this channel for [**{word}**]... This may take a moment.")
+        await ctx.send(
+            f"Starting message scan in this channel for [**{word}**]... This may take a moment."
+        )
 
         prefix = self.bot.command_prefix
         authors = {}
@@ -77,26 +87,31 @@ class Fun(commands.Cog):
                 print(f"found in message ID {message.id} from {message.author}")
                 author_name = message.author.display_name
                 authors[author_name] = authors.get(author_name, 0) + 1
-                count +=1
-            
+                count += 1
+
             total_messages += 1
             if total_messages >= MESSAGES_LIMIT:
                 break
 
         if not authors:
-            report = (f">>> **[**{word}**] Count Complete**\n"
-                 f"Processed **{total_messages}** messages.\n"
-                 f"Found **0** user messages containing the word [**{word}**].")
+            report = (
+                f">>> **[**{word}**] Count Complete**\n"
+                f"Processed **{total_messages}** messages.\n"
+                f"Found **0** user messages containing the word [**{word}**]."
+            )
         else:
-            sorted_authors = sorted(authors.items(), key=lambda item: item[1], reverse=True)
-            top_list = "".join([
-                f"`{name}`: {count} messages.\n"
-                for name, count in sorted_authors[:5]
-            ])
-            report = (f">>> **[**{word}**] Count Complete**\n"
+            sorted_authors = sorted(
+                authors.items(), key=lambda item: item[1], reverse=True
+            )
+            top_list = "".join(
+                [f"`{name}`: {count} messages.\n" for name, count in sorted_authors[:5]]
+            )
+            report = (
+                f">>> **[**{word}**] Count Complete**\n"
                 f"Processed **{total_messages}** messages.\n"
                 f"Total [**{word}**] messages found: **{count}**.\n"
-                f"**Top 5 :**\n{top_list}")    
+                f"**Top 5 :**\n{top_list}"
+            )
         await ctx.send(report)
 
     @scan_for_word.error

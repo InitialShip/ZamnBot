@@ -1,10 +1,11 @@
 import os
 from discord.ext import commands
-import random 
+import random
 import asyncpg as acpg
 
 SLOTS_SYMBOLS = ["🍒", "🍇", "🍊", "🍋", "💰", "💎"]
 WIN_MULTIPLIER = 5
+
 
 class Gamba(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -15,12 +16,14 @@ class Gamba(commands.Cog):
         #     print("Warning: Database pool is None in Economy cog!")
         print("Gamba Cog ready!")
 
-    @commands.hybrid_command(name='slots', aliases=['sl'], description="Play slots machine")
+    @commands.hybrid_command(
+        name="slots", aliases=["sl"], description="Play slots machine"
+    )
     async def slots(self, ctx):
         results = [random.choice(SLOTS_SYMBOLS) for _ in range(3)]
         display_results = f"|{'|'.join(results)}|"
 
-        if results[0] == results[1] == results [2]:
+        if results[0] == results[1] == results[2]:
             winnings = 100 * WIN_MULTIPLIER
             message = (
                 f"**🎰 SLOT MACHINE SPIN 🎰**\n\n"
@@ -36,8 +39,8 @@ class Gamba(commands.Cog):
 
         await ctx.send(message)
 
-    @commands.hybrid_command(name = "roulette", description='Play a roulette game')
-    async def  roulette(self, ctx:commands.Context, trials:int = 1):
+    @commands.hybrid_command(name="roulette", description="Play a roulette game")
+    async def roulette(self, ctx: commands.Context, trials: int = 1):
         CHAMBER = 6
         await ctx.send(f"Pulling the trigger for {trials} times...")
         marked_chamber = random.randint(1, CHAMBER)
@@ -45,7 +48,9 @@ class Gamba(commands.Cog):
             pull_result = random.randint(1, CHAMBER)
 
             if marked_chamber == pull_result:
-                await ctx.send(f"**{ctx.author.display_name}**, You are dead after {trial+1} times")
+                await ctx.send(
+                    f"**{ctx.author.display_name}**, You are dead after {trial+1} times"
+                )
                 return
 
         await ctx.send(f"**{ctx.author.display_name}**, You are still alive!")
