@@ -29,9 +29,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-if COMMAND_PREFIX is None:
-    COMMAND_PREFIX = "z!"
-
 # ============================================================
 # Bot Class Definition
 # ============================================================
@@ -63,10 +60,12 @@ class BotRunner(commands.Bot):
 
     async def on_ready(self):
         print(f"Logged in as {self.user.name}")
-        await self.change_presence(activity=discord.Game(name=f"{command_prefix}help | 💣"))
+        await self.change_presence(activity=discord.Game(name=f"{COMMAND_PREFIX}help | 💣"))
 
-
-bot = BotRunner(command_prefix, intents=intents)
+# ============================================================
+# Bot Initialization
+# ============================================================
+bot = BotRunner(command_prefix=COMMAND_PREFIX, intents=intents)
 
 @bot.command(name="reload", aliases=['r'])    
 @commands.is_owner()
@@ -92,7 +91,7 @@ async def reload_error(ctx, error):
 @bot.command(name="reconnect")
 @commands.is_owner()
 async def reconnect(ctx: commands.Context):
-    return await ctx.send("Still develop")
+    return await ctx.send("Still developing")
     
     success = await bot.db_handler.reconnect()
 
@@ -101,11 +100,6 @@ async def reconnect(ctx: commands.Context):
         await bot.inital_table()
     else:
         await ctx.send("Failed to re-establish database connection.") 
-
-# ============================================================
-# Bot Initialization
-# ============================================================
-bot = BotRunner(command_prefix=COMMAND_PREFIX, intents=intents)
 
 # ============================================================
 # Bot Runner
@@ -117,4 +111,5 @@ if __name__ == "__main__":
     else:
         keep_alive()
         bot.run(token=TOKEN)
+
 
