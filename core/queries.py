@@ -1,0 +1,9 @@
+# core/queries.py
+
+CREATE_USERS_TABLE = """
+CREATE TABLE IF NOT EXISTS users (
+    user_id BIGINT PRIMARY KEY,
+    points INTEGER DEFAULT 0,
+    last_daily TIMESTAMP WITHOUT TIME ZONE DEFAULT '2000-01-01 00:00:00'
+);
+"""
