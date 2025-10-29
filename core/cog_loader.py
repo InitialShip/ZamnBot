@@ -15,13 +15,3 @@ async def load_all_cogs(bot):
                 print(f"  ✅ Loaded cog: {extension}")
             except Exception as e:
                 print(f"  ❌ Failed to load {extension}: {e}")
-
-async def reload_cog(bot: commands.Bot, extension_name: str) -> bool:
-    if extension_name is None:
-        return False
-    module_path = f'cogs.{extension_name}'
-    try:
-        await bot.reload_extension(module_path)
-        return True
-    except commands.ExtensionNotLoaded:
-        return False
