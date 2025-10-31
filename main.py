@@ -71,11 +71,11 @@ bot = BotRunner(command_prefix=COMMAND_PREFIX, intents=intents)
 
 
 # ============================================================
-# Hot reload command
+# Hot reload command [Move to other place]
 # ============================================================
 @bot.command(name="reload")
 @commands.is_owner() 
-async def reload(ctx, extension_name: str):
+async def reload(ctx: commands.Context, extension_name: str):
     if extension_name is None:
         return
     module_path = f"cogs.{extension_name}"
@@ -89,6 +89,18 @@ async def reload(ctx, extension_name: str):
     except Exception as e:
         await ctx.send(f"❌ Failed to reload `{extension_name}`. Error: {e}")
 
+@bot.command(name="dbreconnect")
+@commands.is_owner()
+async def db_reconnect(ctx: commands.Context):
+    old_pool: acpg.Pool = bot.db_pool
+    try:
+        await old_pool.close()
+        new_pool = await acpg.create_pool(DB_URL)
+        bot.db_pool = new_pool
+        await ctx.send(f"✅ Successfully reconnected")
+    except Exception:
+        bot.db_pool = old_pool
+        await ctx.send(f"❌ Database reconnecting error.")
 
 # ============================================================
 # Bot Runner
