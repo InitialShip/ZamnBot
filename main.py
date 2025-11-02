@@ -44,7 +44,7 @@ class BotRunner(commands.Bot):
         """Executed before bot connects to Discord."""
         try:
             print("🔌 Connecting to PostgreSQL database...")
-            self.db_pool = await acpg.create_pool(DB_URL)
+            self.db_pool = await acpg.create_pool(DB_URL,statement_cache_size=0)
 
             # Run table creation query from queries.py
             await self.db_pool.execute(queries.CREATE_USERS_TABLE)
@@ -95,7 +95,7 @@ async def db_reconnect(ctx: commands.Context):
     old_pool: acpg.Pool = bot.db_pool
     try:
         await old_pool.close()
-        new_pool = await acpg.create_pool(DB_URL)
+        new_pool = await acpg.create_pool(DB_URL,statement_cache_size=0)
         bot.db_pool = new_pool
         await ctx.send(f"✅ Successfully reconnected")
     except Exception:
